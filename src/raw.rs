@@ -40,6 +40,7 @@ impl RawEntry {
 
 // @doc: memmap
 // use <leader>od to open the doc
+// [[memmap]]
 
 /// Create a minimal MB1 entry (payload size = 20).
 pub fn raw(start: u64, len: u64, kind: u32) -> RawEntry {
@@ -60,6 +61,7 @@ pub fn raw(start: u64, len: u64, kind: u32) -> RawEntry {
 /// - u64 length
 /// - u32 typ
 /// - (optional extra payload bytes if size > 20)
+// @doc: memlayout
 pub fn push_entry(buf: &mut Vec<u8>, entry: RawEntry) {
     // TODO:
     // - append entry.size (LE)
@@ -76,10 +78,25 @@ pub fn push_entry(buf: &mut Vec<u8>, entry: RawEntry) {
     let length = entry.get_length_unaligned();
     let size = entry.get_size_unaligned();
 
-    buf.push(tipo);
-    buf.push(base_addr);
-    buf.push(length);
-    buf.push(size);
+    let size_bytes = length.to_le_bytes();
+    let base_addr_bytes = base_addr.to_le_bytes();
+    let length_bytes = length.to_le_bytes();
+    let tipo_bytes = tipo.to_le_bytes();
+
+    for byte in tipo_bytes {
+        buf.push(byte);
+    }
+
+    for byte in base_addr_bytes {
+        buf.push(byte);
+    }
+
+    for byte in length_bytes {
+        buf.push(byte);
+    }
+    for byte in size_bytes {
+        buf.push(byte);
+    }
 }
 
 /// Parse ONE entry from a byte slice.
@@ -95,9 +112,17 @@ pub fn read_one(buf: &[u8]) -> Result<(RawEntry, usize), MmapError> {
     // - read base_addr, length, typ from first 20 bytes of payload
     // - ignore extra payload bytes (size-20)
     // - return entry with that size field preserved (even if >20)
+    if buf.len() < 4 {
+        return Err(MmapError::TruncatedHeader { have: buf.len() });
+    }
+
     todo!()
 }
-
+/*
+* how to write tests
+* @doc: testing
+*
+*/
 /// Iterator over a full MB1 mmap blob.
 /// Stops at end, or yields Err for invalid entries.
 /// Must not infinite-loop (especially size==0).
@@ -209,10 +234,10 @@ mod tests {
     #[test]
     fn raw_builder_minimal() {
         let e = raw(0x1000, 0x9000, 1);
-        assert_eq!(e.size, 20);
-        assert_eq!(e.base_addr, 0x1000);
-        assert_eq!(e.length, 0x9000);
-        assert_eq!(e.typ, 1);
+        assert_eq!(e.get_size_unaligned(), 20);
+        assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+        assert_eq!(e.get_length_unaligned(), 0x9000);
+        assert_eq!(e.get_type_unaligned(), 1);
     }
 
     // -------------------------
@@ -303,10 +328,10 @@ mod tests {
 
         let (e, consumed) = read_one(&buf).unwrap();
         assert_eq!(consumed, 24);
-        assert_eq!(e.size, 20);
-        assert_eq!(e.base_addr, 0x1000);
-        assert_eq!(e.length, 0x9000);
-        assert_eq!(e.typ, 1);
+        assert_eq!(e.get_size_unaligned(), 20);
+        assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+        assert_eq!(e.get_length_unaligned(), 0x9000);
+        assert_eq!(e.get_type_unaligned(), 1);
     }
 
     #[test]
@@ -316,10 +341,10 @@ mod tests {
 
         let (e, consumed) = read_one(&buf).unwrap();
         assert_eq!(consumed, (4 + 28) as usize);
-        assert_eq!(e.size, 28);
-        assert_eq!(e.base_addr, 0x1000);
-        assert_eq!(e.length, 0x1111);
-        assert_eq!(e.typ, 2);
+        assert_eq!(e.get_size_unaligned(), 28);
+        assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+        assert_eq!(e.get_length_unaligned(), 0x1111);
+        assert_eq!(e.get_type_unaligned(), 2);
     }
 
     // -------------------------
@@ -334,7 +359,7 @@ mod tests {
         let mut it = Mb1MmapIter::new(&buf);
         let e = it.next().expect("one item").expect("ok");
 
-        assert_eq!(e.base_addr, 0x1000);
+        assert_eq!(e.get_base_addr_unaligned(), 0x1000);
         assert!(it.next().is_none());
     }
 

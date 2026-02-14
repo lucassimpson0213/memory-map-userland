@@ -1,6 +1,15 @@
 [package]
-name = "memmap"
+name = "mb1_memmap"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
-[dependencies]
+[features]
+default = ["std"]
+std = []
+
+[lib]
+# You can keep rlib for Rust-kernel use.
+# Add staticlib only when you actually want a `.a` artifact you link from C/Makefile.
+# crate-type = ["rlib", "staticlib"]
+crate-type = ["rlib"]
+
