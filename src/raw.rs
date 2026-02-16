@@ -1,6 +1,7 @@
 // mb1_memmap.rs
 #![allow(dead_code)]
-
+use crate::tests::common;
+use crate::tests::prelude::*;
 #[repr(C, packed)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RawEntry {
@@ -197,6 +198,8 @@ pub enum MmapError {
 
 #[cfg(test)]
 mod tests {
+    use crate::tests::common::init;
+
     use super::*;
     use core::mem;
 
@@ -205,6 +208,7 @@ mod tests {
     /// Helper for building arbitrary-size entries directly into a buffer.
     /// This is used by tests to craft tricky cases even before push_entry is done.
     fn push_mb1_entry(buf: &mut Vec<u8>, payload_size: u32, start: u64, len: u64, kind: u32) {
+        init();
         buf.extend_from_slice(&payload_size.to_le_bytes());
         buf.extend_from_slice(&start.to_le_bytes());
         buf.extend_from_slice(&len.to_le_bytes());
@@ -227,17 +231,19 @@ mod tests {
 
     #[test]
     fn rawentry_layout_is_expected() {
-        assert_eq!(mem::size_of::<RawEntry>(), 24);
-        assert_eq!(mem::align_of::<RawEntry>(), 1);
+        init();
+        pretty_assertions::assert_eq!(mem::size_of::<RawEntry>(), 24);
+        pretty_assertions::assert_eq!(mem::align_of::<RawEntry>(), 1);
     }
 
     #[test]
     fn raw_builder_minimal() {
+        init();
         let e = raw(0x1000, 0x9000, 1);
-        assert_eq!(e.get_size_unaligned(), 20);
-        assert_eq!(e.get_base_addr_unaligned(), 0x1000);
-        assert_eq!(e.get_length_unaligned(), 0x9000);
-        assert_eq!(e.get_type_unaligned(), 1);
+        pretty_assertions::assert_eq!(e.get_size_unaligned(), 20);
+        pretty_assertions::assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+        pretty_assertions::assert_eq!(e.get_length_unaligned(), 0x9000);
+        pretty_assertions::assert_eq!(e.get_type_unaligned(), 1);
     }
 
     // -------------------------
@@ -246,13 +252,15 @@ mod tests {
 
     #[test]
     fn push_entry_appends_24_for_minimal() {
+        init();
         let mut buf = Vec::new();
         push_entry(&mut buf, raw(0x1000, 0x9000, 1));
-        assert_eq!(buf.len(), 24);
+        pretty_assertions::assert_eq!(buf.len(), 24);
     }
 
     #[test]
     fn push_entry_writes_expected_wire_format_for_minimal() {
+        init();
         let mut buf = Vec::new();
         let e = RawEntry {
             size: 20,
@@ -262,14 +270,15 @@ mod tests {
         };
         push_entry(&mut buf, e);
 
-        assert_eq!(buf[0..4], 20u32.to_le_bytes());
-        assert_eq!(buf[4..12], 0x1122334455667788u64.to_le_bytes());
-        assert_eq!(buf[12..20], 0x0102030405060708u64.to_le_bytes());
-        assert_eq!(buf[20..24], 0xAABBCCDDu32.to_le_bytes());
+        pretty_assertions::assert_eq!(buf[0..4], 20u32.to_le_bytes());
+        pretty_assertions::assert_eq!(buf[4..12], 0x1122334455667788u64.to_le_bytes());
+        pretty_assertions::assert_eq!(buf[12..20], 0x0102030405060708u64.to_le_bytes());
+        pretty_assertions::assert_eq!(buf[20..24], 0xAABBCCDDu32.to_le_bytes());
     }
 
     #[test]
     fn push_entry_with_extra_payload_appends_extra_bytes() {
+        crate::tests::common::init();
         let mut buf = Vec::new();
         let e = RawEntry {
             size: 28, // payload includes 8 extra bytes beyond the required 20
@@ -280,9 +289,9 @@ mod tests {
         push_entry(&mut buf, e);
 
         // total bytes = 4 + size
-        assert_eq!(buf.len(), (4 + 28) as usize);
+        pretty_assertions::assert_eq!(buf.len(), (4 + 28) as usize);
         // extra bytes should exist (whatever pattern you chose; tests assume 0xEE)
-        assert_eq!(&buf[24..32], &[0xEE; 8]);
+        pretty_assertions::assert_eq!(&buf[24..32], &[0xEE; 8]);
     }
 
     // -------------------------
@@ -291,28 +300,31 @@ mod tests {
 
     #[test]
     fn read_one_rejects_truncated_header() {
+        init();
         let buf = vec![0xAA, 0xBB, 0xCC]; // < 4
         let err = read_one(&buf).unwrap_err();
-        assert_eq!(err, MmapError::TruncatedHeader { have: 3 });
+        pretty_assertions::assert_eq!(err, MmapError::TruncatedHeader { have: 3 });
     }
 
     #[test]
     fn read_one_rejects_size_less_than_20() {
+        init();
         let mut buf = Vec::new();
         push_mb1_entry(&mut buf, 19, 0x1000, 0x1000, 1);
         let err = read_one(&buf).unwrap_err();
-        assert_eq!(err, MmapError::SizeTooSmall { size: 19 });
+        pretty_assertions::assert_eq!(err, MmapError::SizeTooSmall { size: 19 });
     }
 
     #[test]
     fn read_one_rejects_truncated_entry() {
+        init();
         let mut buf = Vec::new();
         push_mb1_entry(&mut buf, 20, 0x1000, 0x1000, 1);
         truncate_end(&mut buf, 1);
 
         let err = read_one(&buf).unwrap_err();
         // needed is 4+20=24, have is 23
-        assert_eq!(
+        pretty_assertions::assert_eq!(
             err,
             MmapError::TruncatedEntry {
                 needed: 24,
@@ -323,28 +335,30 @@ mod tests {
 
     #[test]
     fn read_one_parses_minimal_ok() {
+        init();
         let mut buf = Vec::new();
         push_mb1_entry(&mut buf, 20, 0x1000, 0x9000, 1);
 
         let (e, consumed) = read_one(&buf).unwrap();
-        assert_eq!(consumed, 24);
-        assert_eq!(e.get_size_unaligned(), 20);
-        assert_eq!(e.get_base_addr_unaligned(), 0x1000);
-        assert_eq!(e.get_length_unaligned(), 0x9000);
-        assert_eq!(e.get_type_unaligned(), 1);
+        pretty_assertions::assert_eq!(consumed, 24);
+        pretty_assertions::assert_eq!(e.get_size_unaligned(), 20);
+        pretty_assertions::assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+        pretty_assertions::assert_eq!(e.get_length_unaligned(), 0x9000);
+        pretty_assertions::assert_eq!(e.get_type_unaligned(), 1);
     }
 
     #[test]
     fn read_one_parses_and_skips_extra_payload() {
+        init();
         let mut buf = Vec::new();
         push_mb1_entry(&mut buf, 28, 0x1000, 0x1111, 2);
 
         let (e, consumed) = read_one(&buf).unwrap();
-        assert_eq!(consumed, (4 + 28) as usize);
-        assert_eq!(e.get_size_unaligned(), 28);
-        assert_eq!(e.get_base_addr_unaligned(), 0x1000);
-        assert_eq!(e.get_length_unaligned(), 0x1111);
-        assert_eq!(e.get_type_unaligned(), 2);
+        pretty_assertions::assert_eq!(consumed, (4 + 28) as usize);
+        pretty_assertions::assert_eq!(e.get_size_unaligned(), 28);
+        pretty_assertions::assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+        pretty_assertions::assert_eq!(e.get_length_unaligned(), 0x1111);
+        pretty_assertions::assert_eq!(e.get_type_unaligned(), 2);
     }
 
     // -------------------------
@@ -359,12 +373,13 @@ mod tests {
         let mut it = Mb1MmapIter::new(&buf);
         let e = it.next().expect("one item").expect("ok");
 
-        assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+        pretty_assertions::assert_eq!(e.get_base_addr_unaligned(), 0x1000);
         assert!(it.next().is_none());
     }
 
     #[test]
     fn iter_parses_multiple_entries_in_order() {
+        init();
         let mut buf = Vec::new();
         push_mb1_entry(&mut buf, 20, 0x1000, 0x1000, 1);
         push_mb1_entry(&mut buf, 28, 0x3000, 0x2000, 2);
@@ -374,11 +389,12 @@ mod tests {
             .map(|r| r.unwrap().base_addr)
             .collect();
 
-        assert_eq!(starts, vec![0x1000, 0x3000, 0x9000]);
+        pretty_assertions::assert_eq!(starts, vec![0x1000, 0x3000, 0x9000]);
     }
 
     #[test]
     fn iter_size_zero_does_not_infinite_loop() {
+        init();
         // size=0 is invalid (size < 20). Iterator must not get stuck.
         let mut buf = Vec::new();
         buf.extend_from_slice(&0u32.to_le_bytes());
@@ -393,6 +409,7 @@ mod tests {
 
     #[test]
     fn iter_truncated_entry_yields_error_once_then_stops() {
+        init();
         let mut buf = Vec::new();
         push_mb1_entry(&mut buf, 20, 0x1000, 0x1000, 1);
         truncate_end(&mut buf, 5);
@@ -423,7 +440,7 @@ mod tests {
         // assert!(region.is_none()); // reject overflow
         if let Some(r) = region {
             assert!(r.end() >= r.start, "end must not wrap");
-            assert_eq!(r.end(), u64::MAX, "if clamping, end saturates");
+            pretty_assertions::assert_eq!(r.end(), u64::MAX, "if clamping, end saturates");
         }
     }
     */

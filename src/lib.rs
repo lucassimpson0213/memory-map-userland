@@ -5,6 +5,7 @@
 pub mod frames;
 pub mod raw;
 pub mod region;
+pub mod tests;
 
 // Your code goes here.
 // Don’t depend on Vec in the core parsing path unless you have alloc in the kernel.
