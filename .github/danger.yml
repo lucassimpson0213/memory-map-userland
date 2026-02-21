@@ -1,0 +1,36 @@
+name: danger
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+jobs:
+  danger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm i -D danger typescript ts-node
+
+      - name: Debug dangerfile
+        run: |
+          pwd
+          ls -la
+          find . -maxdepth 2 -iname "dangerfile.*" -print
+
+      - name: Run Danger
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx danger ci --failOnErrors --dangerfile dangerfile.ts
