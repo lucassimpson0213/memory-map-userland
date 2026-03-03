@@ -35,7 +35,7 @@ full loop. -- https://github.com/Simpson-Systems/sys-userland-kernel-rust/issues
 
 Pick ONE per week. Do not combine.
 
-- [x] Duplicate execution
+- [ ] Duplicate execution
 - [ ] Lost acknowledgement
 - [ ] Crash during write
 - [ ] Partial commit
@@ -48,7 +48,7 @@ Pick ONE per week. Do not combine.
 
 This week:
 
-> ___________________________
+> _________DUPLICATES__________________
 
 Invariant:
 
