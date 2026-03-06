@@ -1,0 +1,531 @@
+// // mb1_memmap.rs
+// // // #![allow(dead_code)]
+// // // #![allow(unused_variables)]
+// // // #![allow(unused_imports)]
+// // //
+// // // use std::marker::PhantomData;
+// // //
+// // // #[repr(C, packed)]
+// // // #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+// // // pub struct RawEntry {
+// // //     pub size: u32,      // payload size (MB1: >= 20, excludes this size field)
+// // //     pub base_addr: u64, // start
+// // //     pub length: u64,    // len
+// // //     pub typ: u32,       // kind
+// // // }
+// // // //unaligned getters, rust does not allow references to unaligned memory
+// // // impl RawEntry {
+// // //     pub fn get_size_unaligned(self) -> u32 {
+// // //         let pointer = core::ptr::addr_of!(self.size);
+// // //         let val = unsafe { pointer.read_unaligned() };
+// // //         return val;
+// // //     }
+// // //
+// // //     pub fn get_base_addr_unaligned(self) -> u64 {
+// // //         let pointer = core::ptr::addr_of!(self.base_addr);
+// // //         let val = unsafe { pointer.read_unaligned() };
+// // //         return val;
+// // //     }
+// // //     pub fn get_length_unaligned(self) -> u64 {
+// // //         let pointer = core::ptr::addr_of!(self.length);
+// // //         let val = unsafe { pointer.read_unaligned() };
+// // //         return val;
+// // //     }
+// // //     pub fn get_type_unaligned(self) -> u32 {
+// // //         let pointer = core::ptr::addr_of!(self.typ);
+// // //         let val = unsafe { pointer.read_unaligned() };
+// // //         return val;
+// // //     }
+// // // }
+// // //
+// // // // -------------------------
+// // // // Public API you implement
+// // // // -------------------------
+// // //
+// // // // @doc: memmap
+// // // // use <leader>od to open the doc
+// // // // [[memmap]]
+// // //
+// // // /// Create a minimal MB1 entry (payload size = 20).
+// // // pub fn raw(start: u64, len: u64, kind: u32) -> RawEntry {
+// // //     // TODO: return a RawEntry with size=20 and fields set
+// // //     return RawEntry {
+// // //         size: 20,
+// // //         base_addr: start,
+// // //         length: len,
+// // //         typ: kind,
+// // //     };
+// // // }
+// // //
+// // // /// Append an entry in MB1 mmap wire format (little-endian).
+// // // ///
+// // // /// Wire format:
+// // // /// - u32 size (payload size, excludes this u32)
+// // // /// - u64 base_addr
+// // // /// - u64 length
+// // // /// - u32 typ
+// // // /// - (optional extra payload bytes if size > 20)
+// // // // @doc: memlayout
+// // // pub fn push_entry(buf: &mut Vec<u8>, entry: RawEntry) {
+// // //     // TODO:
+// // //     // - append entry.size (LE)
+// // //     // - append base_addr (LE)
+// // //     // - append length (LE)
+// // //     // - append typ (LE)
+// // //     //
+// // //     // IMPORTANT:
+// // //     // - This function should append bytes into `buf` (not print a pointer).
+// // //     // - Tests will also use size>20 and expect you to append (size-20) extra bytes.
+// // //     //   Pick a fill pattern for those extra bytes (e.g., 0xEE) and keep consistent.
+// // //     let tipo = entry.get_type_unaligned();
+// // //     let base_addr = entry.get_base_addr_unaligned();
+// // //     let length = entry.get_length_unaligned();
+// // //     let size = entry.get_size_unaligned();
+// // //
+// // //     let size_bytes = size.to_le_bytes();
+// // //     let base_addr_bytes = base_addr.to_le_bytes();
+// // //     let length_bytes = length.to_le_bytes();
+// // //     let tipo_bytes = tipo.to_le_bytes();
+// // //
+// // //     for byte in size_bytes {
+// // //         buf.push(byte);
+// // //     }
+// // //     for byte in base_addr_bytes {
+// // //         buf.push(byte);
+// // //     }
+// // //
+// // //     for byte in length_bytes {
+// // //         buf.push(byte);
+// // //     }
+// // //     for byte in tipo_bytes {
+// // //         buf.push(byte);
+// // //     }
+// // //
+// // //     if size > 20 as u32 {
+// // //         let num: u32 = 0;
+// // //         let diff = size.saturating_sub(20) as usize;
+// // //         // @doc: saturating_sub
+// // //
+// // //         if diff > 0 {
+// // //             buf.resize(buf.len() + diff, 0xEE);
+// // //         }
+// // //     }
+// // // }
+// // //
+// // // /// Parse ONE entry from a byte slice.
+// // // /// Returns Ok((entry, bytes_consumed)) or Err.
+// // // ///
+// // // /// bytes_consumed must be: 4 + entry.size
+// // // pub fn read_one(buf: &[u8]) -> Result<(RawEntry, usize), MmapError> {
+// // //     // TODO:
+// // //     // - if buf < 4 => Err(TruncatedHeader)
+// // //     // - read size LE
+// // //     // - validate size >= 20 (else Err(SizeTooSmall{size}))
+// // //     // - needed = 4 + size as usize; if buf < needed => Err(TruncatedEntry{needed, have})
+// // //     // - read base_addr, length, typ from first 20 bytes of payload
+// // //     // - ignore extra payload bytes (size-20)
+// // //     // - return entry with that size field preserved (even if >20)
+// // //     let size = buf.len();
+// // //     if size < 4 {
+// // //         return Err(MmapError::TruncatedHeader { have: buf.len() });
+// // //     } else if size < 20 {
+// // //         return Err(MmapError::SizeTooSmall {
+// // //             size: buf.len() as u32,
+// // //         });
+// // //     } else {
+// // //         let base_addr = read_u64(buf, 4);
+// // //         let length = read_u64(buf, 8);
+// // //         let typ = read_u32(buf, 12);
+// // //         let entry = RawEntry {
+// // //             size: size as u32,
+// // //             base_addr: base_addr,
+// // //             length: length,
+// // //             typ: typ,
+// // //         };
+// // //
+// // //         Ok((entry, size))
+// // //     }
+// // // }
+// // //
+// // // fn read_u32(bytes: &[u8], offset: usize) -> u32 {
+// // //     let mut arr = [0u8; 4];
+// // //     arr.copy_from_slice(&bytes[offset..offset + 4]);
+// // //     u32::from_le_bytes(arr)
+// // // }
+// // //
+// // // fn read_u64(bytes: &[u8], offset: usize) -> u64 {
+// // //     let mut arr = [0u8; 8];
+// // //     arr.copy_from_slice(&bytes[offset..offset + 8]);
+// // //     u64::from_le_bytes(arr)
+// // // }
+// // //
+// // // /*
+// // // * how to write tests
+// // // * @doc: testing
+// // // *
+// // // */
+// // // /// Iterator over a full MB1 mmap blob.
+// // // /// Stops at end, or yields Err for invalid entries.
+// // // /// Must not infinite-loop (especially size==0).
+// // // pub struct Mb1MmapIter<'a> {
+// // //     // TODO: store buf and current offset
+// // //     buffer: &'a [u8],
+// // //     offset: usize,
+// // // }
+// // //
+// // // impl<'a> Mb1MmapIter<'a> {
+// // //     /*
+// // //      *
+// // //      *  The size of the &'a[u8] is a fat pointer
+// // //      *  It stores the size of the buffer, and the
+// // //      *  reference to it
+// // //      *  - https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=87a4f95e430cf82128388d6c019a36fc
+// // //      *  I think it works like this:
+// // //      *
+// // //      *  &[T] is a fat pointer (composed of a pointer and size)
+// // //      *  which is a borrowed slice.
+// // //      *
+// // //      *  Box<[T]> (and other owned pointing types) are fat
+// // //      *  pointers (again composed of a pointer and size) which are an owned slice.
+// // //      *
+// // //      *  [T; N] are arrays which have their size known at compile time, so can be stored in place.
+// // //      *
+// // //      *  Since the size of Box<[T; N]> is also known at compile time,
+// // //      *  the pointer does not need to store any additional data and is not fat.
+// // //      *
+// // //      *  In all cases, [T] and [T; N] are some way of describing contiguous memory.
+// // //      *  The main distinction between a slice and an array is whether the size is known at compile time or not.
+// // //      *
+// // //      *
+// // //      *
+// // //      *
+// // //      */
+// // //     pub fn new(buf: &'a [u8]) -> Self {
+// // //         Mb1MmapIter {
+// // //             buffer: buf,
+// // //             offset: 0,
+// // //         }
+// // //     }
+// // // }
+// // //
+// // // impl<'a> Iterator for Mb1MmapIter<'a> {
+// // //     type Item = Result<RawEntry, MmapError>;
+// // //
+// // //     fn next(&mut self) -> Option<Self::Item> {
+// // //         // TODO:
+// // //         // - if at end => None
+// // //         // - call read_one on remaining slice
+// // //         // - on Ok((e, consumed)):
+// // //         //     advance offset by consumed (4 + e.size)
+// // //         //     return Some(Ok(e))
+// // //         // - on Err(e):
+// // //         //     advance offset in a way that guarantees progress OR end iteration
+// // //         //     (common policy: return Some(Err(e)) and then set offset = buf.len())
+// // //         //     so you don't yield the same error forever.
+// // //     }
+// // // }
+// // //
+// // // /// Optional: your “sanitize” stage for later phases.
+// // // /// For now, leaving it TODO; tests for sanitize can be ignored until you implement.
+// // // #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+// // // pub struct MemRegion {
+// // //     pub start: u64,
+// // //     pub len: u64,
+// // //     pub kind: u32,
+// // // }
+// // //
+// // // impl MemRegion {
+// // //     pub fn end(self) -> u64 {
+// // //         // TODO: return start + len (choose overflow policy in sanitize)
+// // //         todo!()
+// // //     }
+// // // }
+// // //
+// // // pub fn sanitize(_e: RawEntry) -> Option<MemRegion> {
+// // //     // TODO (phase 2):
+// // //     // - drop len==0
+// // //     // - handle overflow start+len (reject or clamp)
+// // //     // - decide what to do with kinds (maybe only typ==1 is usable)
+// // //     todo!()
+// // // }
+// // //
+// // // // -------------------------
+// // // // Errors you implement
+// // // // -------------------------
+// // //
+// // // #[derive(Clone, Debug, PartialEq, Eq)]
+// // // pub enum MmapError {
+// // //     TruncatedHeader { have: usize },
+// // //     SizeTooSmall { size: u32 },
+// // //     TruncatedEntry { needed: usize, have: usize },
+// // // }
+// // //
+// // // // -------------------------
+// // // // Tests
+// // // // -------------------------
+// // //
+// // // #[cfg(test)]
+// // // mod tests {
+// // //     use crate::tests::common::init;
+// // //
+// // //     use super::*;
+// // //     use core::mem;
+// // //
+// // //     const MIN_PAYLOAD: u32 = 20;
+// // //
+// // //     /// Helper for building arbitrary-size entries directly into a buffer.
+// // //     /// This is used by tests to craft tricky cases even before push_entry is done.
+// // //     fn push_mb1_entry(buf: &mut Vec<u8>, payload_size: u32, start: u64, len: u64, kind: u32) {
+// // //         init();
+// // //         buf.extend_from_slice(&payload_size.to_le_bytes());
+// // //         buf.extend_from_slice(&start.to_le_bytes());
+// // //         buf.extend_from_slice(&len.to_le_bytes());
+// // //         buf.extend_from_slice(&kind.to_le_bytes());
+// // //
+// // //         let extra = payload_size.saturating_sub(MIN_PAYLOAD) as usize;
+// // //         if extra > 0 {
+// // //             buf.extend_from_slice(&vec![0xEE; extra]);
+// // //         }
+// // //     }
+// // //
+// // //     fn truncate_end(buf: &mut Vec<u8>, n: usize) {
+// // //         let new_len = buf.len().saturating_sub(n);
+// // //         buf.truncate(new_len);
+// // //     }
+// // //
+// // //     // -------------------------
+// // //     // Layout / builder
+// // //     // -------------------------
+// // //
+// // //     #[test]
+// // //     fn rawentry_layout_is_expected() {
+// //         init();
+// //         pretty_assertions::assert_eq!(mem::size_of::<RawEntry>(), 24);
+// //         pretty_assertions::assert_eq!(mem::align_of::<RawEntry>(), 1);
+// //     }
+// //
+// //     #[test]
+// //     fn raw_builder_minimal() {
+// //         init();
+// //         let e = raw(0x1000, 0x9000, 1);
+// //         pretty_assertions::assert_eq!(e.get_size_unaligned(), 20);
+// //         pretty_assertions::assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+// //         pretty_assertions::assert_eq!(e.get_length_unaligned(), 0x9000);
+// //         pretty_assertions::assert_eq!(e.get_type_unaligned(), 1);
+// //     }
+// //
+// //     // -------------------------
+// //     // push_entry behavior
+// //     // -------------------------
+// //
+// //     #[test]
+// //     fn push_entry_appends_24_for_minimal() {
+// //         let mut buf = Vec::new();
+// //         push_entry(&mut buf, raw(0x1000, 0x9000, 1));
+// //         pretty_assertions::assert_eq!(buf.len(), 24);
+// //     }
+// //
+// //     #[test]
+// //     fn push_entry_writes_expected_wire_format_for_minimal() {
+// //         init();
+// //         let mut buf = Vec::new();
+// //         let e = RawEntry {
+// //             size: 20,
+// //             base_addr: 0x1122334455667788,
+// //             length: 0x0102030405060708,
+// //             typ: 0xAABBCCDD,
+// //         };
+// //         push_entry(&mut buf, e);
+// //
+// //         pretty_assertions::assert_eq!(buf[0..4], 20u32.to_le_bytes());
+// //         pretty_assertions::assert_eq!(buf[4..12], 0x1122334455667788u64.to_le_bytes());
+// //         pretty_assertions::assert_eq!(buf[12..20], 0x0102030405060708u64.to_le_bytes());
+// //         pretty_assertions::assert_eq!(buf[20..24], 0xAABBCCDDu32.to_le_bytes());
+// //         //insta::assert_debug_snapshot!(buf);
+// //     }
+// //
+// //     #[test]
+// //     fn push_entry_with_extra_payload_appends_extra_bytes() {
+// //         let mut buf = Vec::new();
+// //         let e = RawEntry {
+// //             size: 28, // payload includes 8 extra bytes beyond the required 20
+// //             base_addr: 0x1000,
+// //             length: 0x2000,
+// //             typ: 1,
+// //         };
+// //         push_entry(&mut buf, e);
+// //
+// //         // total bytes = 4 + size
+// //         pretty_assertions::assert_eq!(buf.len(), (4 + 28) as usize);
+// //         // extra bytes should exist  (whatever pattern you chose; tests assume 0xEE)
+// //         pretty_assertions::assert_eq!(&buf[24..32], &[0xEE; 8]);
+// //     }
+// //
+// //     // -------------------------
+// //     // read_one behavior
+// //     // -------------------------
+// //     use proptest::prelude::*;
+// //
+// //     proptest! {
+// //         #[test]
+// //         fn roundtrip_random_entries(
+// //             size in 20u32..100u32,
+// //             base in any::<u64>(),
+// //             length in any::<u64>(),
+// //             typ in any::<u32>(),
+// //         ) {
+// //             let entry = RawEntry {
+// //                 size,
+// //                 base_addr: base,
+// //                 length,
+// //                 typ,
+// //             };
+// //
+// //             let mut buf = Vec::new();
+// //             push_entry(&mut buf, entry);
+// //
+// //             let (parsed, _) = read_one(&buf).unwrap();
+// //
+// //             prop_assert_eq!(parsed, entry);
+// //         }
+// //     }
+// //
+// //     #[test]
+// //     fn read_one_rejects_truncated_header() {
+// //         let buf = vec![0xAA, 0xBB, 0xCC]; // < 4
+// //         let err = read_one(&buf).unwrap_err();
+// //         pretty_assertions::assert_eq!(err, MmapError::TruncatedHeader { have: 3 });
+// //     }
+// //
+// //     #[test]
+// //     fn read_one_rejects_size_less_than_20() {
+// //         let mut buf = Vec::new();
+// //         push_mb1_entry(&mut buf, 19, 0x1000, 0x1000, 1);
+// //         let err = read_one(&buf).unwrap_err();
+// //         pretty_assertions::assert_eq!(err, MmapError::SizeTooSmall { size: 19 });
+// //     }
+// //
+// //     #[test]
+// //     fn read_one_rejects_truncated_entry() {
+// //         let mut buf = Vec::new();
+// //         push_mb1_entry(&mut buf, 20, 0x1000, 0x1000, 1);
+// //         truncate_end(&mut buf, 1);
+// //
+// //         let err = read_one(&buf).unwrap_err();
+// //         // needed is 4+20=24, have is 23
+// //         pretty_assertions::assert_eq!(
+// //             err,
+// //             MmapError::TruncatedEntry {
+// //                 needed: 24,
+// //                 have: 23
+// //             }
+// //         );
+// //     }
+// //
+// //     #[test]
+// //     fn read_one_parses_minimal_ok() {
+// //         let mut buf = Vec::new();
+// //         push_mb1_entry(&mut buf, 20, 0x1000, 0x9000, 1);
+// //
+// //         let (e, consumed) = read_one(&buf).unwrap();
+// //         pretty_assertions::assert_eq!(consumed, 24);
+// //         pretty_assertions::assert_eq!(e.get_size_unaligned(), 20);
+// //         pretty_assertions::assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+// //         pretty_assertions::assert_eq!(e.get_length_unaligned(), 0x9000);
+// //         pretty_assertions::assert_eq!(e.get_type_unaligned(), 1);
+// //     }
+// //
+// //     #[test]
+// //     fn read_one_parses_and_skips_extra_payload() {
+// //         let mut buf = Vec::new();
+// //         push_mb1_entry(&mut buf, 28, 0x1000, 0x1111, 2);
+// //
+// //         let (e, consumed) = read_one(&buf).unwrap();
+// //         pretty_assertions::assert_eq!(consumed, (4 + 28) as usize);
+// //         pretty_assertions::assert_eq!(e.get_size_unaligned(), 28);
+// //         pretty_assertions::assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+// //         pretty_assertions::assert_eq!(e.get_length_unaligned(), 0x1111);
+// //         pretty_assertions::assert_eq!(e.get_type_unaligned(), 2);
+// //     }
+// //
+// //     // -------------------------
+// //     // Iterator behavior
+// //     // -------------------------
+// //
+// //     #[test]
+// //     fn iter_parses_single_entry_and_ends() {
+// //         let mut buf = Vec::new();
+// //         push_mb1_entry(&mut buf, 20, 0x1000, 0x9000, 1);
+// //
+// //         let mut it = Mb1MmapIter::new(&buf);
+// //         let e = it.next().expect("one item").expect("ok");
+// //
+// //         pretty_assertions::assert_eq!(e.get_base_addr_unaligned(), 0x1000);
+// //         assert!(it.next().is_none());
+// //     }
+// //
+// //     #[test]
+// //     fn iter_parses_multiple_entries_in_order() {
+// //         let mut buf = Vec::new();
+// //         push_mb1_entry(&mut buf, 20, 0x1000, 0x1000, 1);
+// //         push_mb1_entry(&mut buf, 28, 0x3000, 0x2000, 2);
+// //         push_mb1_entry(&mut buf, 20, 0x9000, 0x1000, 1);
+// //
+// //         let starts: Vec<u64> = Mb1MmapIter::new(&buf)
+// //             .map(|r| r.unwrap().base_addr)
+// //             .collect();
+// //
+// //         pretty_assertions::assert_eq!(starts, vec![0x1000, 0x3000, 0x9000]);
+// //     }
+// //
+// //     #[test]
+// //     fn iter_size_zero_does_not_infinite_loop() {
+// //         // size=0 is invalid (size < 20). Iterator must not get stuck.
+// //         let mut buf = Vec::new();
+// //         buf.extend_from_slice(&0u32.to_le_bytes());
+// //         buf.extend_from_slice(&[0xAA; 64]);
+// //
+// //         let mut it = Mb1MmapIter::new(&buf);
+// //         let first = it.next().expect("must return something");
+// //         assert!(first.is_err(), "size=0 should error");
+// //         // after error, iterator should stop (policy enforced in next())
+// //         assert!(it.next().is_none());
+// //     }
+// //
+// //     #[test]
+// //     fn iter_truncated_entry_yields_error_once_then_stops() {
+// //         let mut buf = Vec::new();
+// //         push_mb1_entry(&mut buf, 20, 0x1000, 0x1000, 1);
+// //         truncate_end(&mut buf, 5);
+// //
+// //         let mut it = Mb1MmapIter::new(&buf);
+//         assert!(it.next().unwrap().is_err());
+//         assert!(it.next().is_none(), "must not repeat same error forever");
+//     }
+//
+//     // -------------------------
+//     // sanitize tests (phase 2)
+//     // -------------------------
+//     // Uncomment when you implement sanitize.
+//
+//     /*
+//     #[test]
+//     fn sanitize_drops_zero_length() {
+//         let e = raw(0x2000, 0, 1);
+//         assert!(sanitize(e).is_none());
+//     }
+//
+//     #[test]
+//     fn sanitize_handles_overflow_start_plus_len() {
+//         let e = raw(u64::MAX - 0xF, 0x200, 1);
+//         let region = sanitize(e);
+//
+//         // Choose one policy:
+//         // assert!(region.is_none()); // reject overflow
+//         if let Some(r) = region {
+//             assert!(r.end() >= r.start, "end must not wrap");
+//             pretty_assertions::assert_eq!(r.end(), u64::MAX, "if clamping, end saturates");
+//         }
+//     }
+//     */
+// }
