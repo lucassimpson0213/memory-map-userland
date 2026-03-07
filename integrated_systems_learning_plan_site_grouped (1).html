@@ -1,0 +1,1485 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Integrated Systems Learning Plan - Enhanced Dashboard</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121932;
+      --panel-2:#182140;
+      --text:#e8ecf8;
+      --muted:#a7b0cc;
+      --accent:#7aa2ff;
+      --accent-2:#8be9fd;
+      --border:#2a3566;
+      --good:#7ee787;
+      --shadow: 0 10px 30px rgba(0,0,0,.28);
+      --max: 1200px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body{
+      margin:0;
+      font: 16px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg,#0a0f1f 0%, #0e1430 100%);
+      color:var(--text);
+    }
+    a{ color:var(--accent-2); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+    code, pre{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .app{
+      max-width: var(--max);
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: 300px 1fr;
+      gap: 24px;
+      padding: 24px;
+    }
+    .sidebar{
+      position: sticky;
+      top: 16px;
+      align-self:start;
+      background: rgba(18,25,50,.82);
+      backdrop-filter: blur(10px);
+      border:1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      max-height: calc(100vh - 32px);
+      overflow:auto;
+    }
+    .brand{
+      padding-bottom: 14px;
+      border-bottom:1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .brand h1{
+      font-size: 1.05rem;
+      line-height:1.25;
+      margin:0 0 6px 0;
+    }
+    .brand p{
+      margin:0;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    .toc h2, .tools h2{
+      font-size:.92rem;
+      text-transform: uppercase;
+      letter-spacing:.08em;
+      color:var(--muted);
+      margin: 16px 0 10px;
+    }
+    .toc a{
+      display:block;
+      padding:7px 10px;
+      border-radius: 10px;
+      color: var(--text);
+      font-size:.95rem;
+    }
+    .toc a:hover, .toc a.active{
+      background: var(--panel-2);
+      text-decoration:none;
+    }
+    .content{
+      min-width:0;
+    }
+    .hero, .card, details{
+      background: rgba(18,25,50,.86);
+      border:1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+    .hero{
+      padding: 28px;
+      margin-bottom: 22px;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero::after{
+      content:"";
+      position:absolute;
+      inset:auto -80px -80px auto;
+      width:220px;height:220px;
+      background: radial-gradient(circle, rgba(122,162,255,.25), transparent 60%);
+      pointer-events:none;
+    }
+    .eyebrow{
+      display:inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #121a3a;
+      border:1px solid var(--border);
+      color:var(--accent-2);
+      font-size:.82rem;
+      letter-spacing:.03em;
+    }
+    .hero h2{
+      font-size: clamp(1.7rem, 4vw, 2.7rem);
+      line-height:1.1;
+      margin: 12px 0 10px;
+    }
+    .hero p{
+      color: var(--muted);
+      max-width: 70ch;
+      margin: 0 0 18px;
+    }
+    .hero-actions{
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .btn{
+      appearance:none; border:none; cursor:pointer;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 600;
+      background: var(--accent);
+      color:#081224;
+      box-shadow: var(--shadow);
+    }
+    .btn.secondary{
+      background: transparent;
+      color: var(--text);
+      border:1px solid var(--border);
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:18px;
+      margin-bottom: 22px;
+    }
+    .span-12{ grid-column: span 12; }
+    .span-8{ grid-column: span 8; }
+    .span-7{ grid-column: span 7; }
+    .span-6{ grid-column: span 6; }
+    .span-5{ grid-column: span 5; }
+    .span-4{ grid-column: span 4; }
+    .card{
+      padding: 20px;
+    }
+    .card h3, .section h3{
+      margin-top:0;
+      font-size: 1.15rem;
+    }
+    .muted{ color:var(--muted); }
+    .chips{
+      display:flex; flex-wrap:wrap; gap:8px;
+    }
+    .chip{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#121a38;
+      color:var(--text);
+      font-size:.88rem;
+    }
+    .checklist{
+      display:grid; gap:10px; margin-top:12px;
+    }
+    .check{
+      display:flex; align-items:flex-start; gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#111831;
+    }
+    .check input{ margin-top:3px; transform:scale(1.15); accent-color: var(--good); }
+    .check.done{ border-color:#275f34; background:#0f1f16; }
+    .section{
+      margin: 24px 0;
+      scroll-margin-top: 20px;
+    }
+    .section .card{
+      padding: 24px;
+    }
+    .section h2{
+      font-size: 1.45rem;
+      margin: 0 0 14px;
+    }
+    .section h4{
+      margin:18px 0 8px;
+      font-size:1rem;
+      color: var(--accent-2);
+    }
+    ul, ol{ padding-left: 1.2rem; }
+    hr{
+      border:none; border-top:1px solid var(--border); margin: 18px 0;
+    }
+    pre{
+      background:#0b1227;
+      padding:16px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      overflow:auto;
+      color:#dfe7ff;
+    }
+    details{
+      padding: 16px 18px;
+      margin: 14px 0;
+    }
+    details > summary{
+      cursor:pointer;
+      font-weight:700;
+      color:var(--text);
+    }
+    .roadmap{
+      counter-reset: item;
+      display:grid; gap:12px;
+    }
+    .step{
+      display:flex; gap:12px; align-items:flex-start;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#101733;
+    }
+    .num{
+      width:30px; height:30px; border-radius:999px;
+      display:grid; place-items:center;
+      background: var(--panel-2);
+      color: var(--accent-2);
+      font-weight:700;
+      flex: none;
+    }
+    .stack{
+      display:grid; gap:8px; max-width: 360px;
+      margin: 0 auto;
+    }
+    .layer{
+      padding:10px 12px;
+      text-align:center;
+      border-radius:12px;
+      background:#101733;
+      border:1px solid var(--border);
+    }
+    .arrow{
+      text-align:center; color:var(--muted); font-size: 1.2rem;
+    }
+    .small{ font-size:.92rem; }
+    @media (max-width: 980px){
+      .app{ grid-template-columns: 1fr; }
+      .sidebar{ position:relative; top:auto; max-height:none; }
+      .span-8,.span-7,.span-6,.span-5,.span-4{ grid-column: span 12; }
+    }
+  
+    .topbar{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-bottom:18px;
+    }
+    .searchbar{
+      flex:1 1 320px;
+      display:flex; align-items:center; gap:10px;
+      background: rgba(18,25,50,.86);
+      border:1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px 14px;
+      box-shadow: var(--shadow);
+    }
+    .searchbar input{
+      background:transparent; border:none; outline:none; width:100%;
+      color:var(--text); font-size:.98rem;
+    }
+    .kbd{
+      border:1px solid var(--border);
+      border-bottom-width:2px;
+      border-radius:8px;
+      padding:2px 8px;
+      color:var(--muted);
+      font-size:.82rem;
+      background:#0f1732;
+      white-space:nowrap;
+    }
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .btn.small{
+      padding:8px 12px; font-size:.92rem;
+    }
+    .progress-wrap{
+      margin-top: 10px;
+      background:#0f1732;
+      border:1px solid var(--border);
+      border-radius: 999px;
+      overflow:hidden;
+      height: 12px;
+    }
+    .progress-bar{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--good), var(--accent-2));
+      transition: width .2s ease;
+    }
+    .progress-meta{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:.9rem;
+    }
+    .filters{
+      display:flex; flex-wrap:wrap; gap:8px; margin-top: 12px;
+    }
+    .filter-chip{
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#101733;
+      color:var(--text);
+      cursor:pointer;
+      font-size:.88rem;
+      user-select:none;
+    }
+    .filter-chip.active{
+      background: var(--panel-2);
+      outline:1px solid rgba(139,233,253,.25);
+    }
+    .is-hidden-by-filter{
+      display:none !important;
+    }
+    .focus-mode .section,
+    .focus-mode .grid,
+    .focus-mode .hero{
+      opacity:.30;
+      transform: scale(.995);
+      transition: opacity .18s ease;
+    }
+    .focus-mode .is-focus{
+      opacity:1 !important;
+      transform:none !important;
+    }
+    .step{
+      cursor:pointer;
+      transition: border-color .15s ease, transform .15s ease;
+    }
+    .step:hover{ transform: translateY(-1px); border-color:#4160b8; }
+    .step-details{
+      display:none;
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px solid var(--border);
+      color:var(--muted);
+      font-size:.94rem;
+    }
+    .step.open .step-details{ display:block; }
+    .step strong::after{
+      content:"  +";
+      color:var(--muted);
+      font-weight:400;
+    }
+    .step.open strong::after{
+      content:"  −";
+    }
+    .section-tools{
+      display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;
+    }
+    .section-tools .mini{
+      padding:7px 10px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#101733;
+      color:var(--text);
+      cursor:pointer;
+      font-size:.88rem;
+    }
+    .section-tools .mini.active{
+      background: var(--panel-2);
+    }
+    .section.focused-card .card{
+      outline:2px solid rgba(122,162,255,.45);
+    }
+    .drawer-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      display:none; z-index:30;
+    }
+    .drawer{
+      position:fixed; top:0; right:0; height:100%; width:min(520px, 95vw);
+      background: #0f1732;
+      border-left:1px solid var(--border);
+      box-shadow: var(--shadow);
+      transform: translateX(100%);
+      transition: transform .22s ease;
+      z-index:40;
+      display:flex; flex-direction:column;
+    }
+    .drawer.open{ transform: translateX(0); }
+    .drawer-backdrop.open{ display:block; }
+    .drawer-head{
+      padding:18px;
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+    }
+    .drawer-body{
+      padding:18px;
+      display:flex; flex-direction:column; gap:12px;
+      min-height:0; flex:1;
+    }
+    .drawer textarea{
+      min-height: 340px;
+      resize: vertical;
+      width:100%;
+      background:#0b1227;
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
+      outline:none;
+      font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .palette-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      display:none; z-index:50;
+    }
+    .palette{
+      position:fixed;
+      left:50%; top:12vh; transform:translateX(-50%) scale(.98);
+      width:min(760px, 94vw);
+      background:#0f1732;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      display:none;
+      z-index:60;
+      overflow:hidden;
+    }
+    .palette.open, .palette-backdrop.open{ display:block; }
+    .palette-head{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+    }
+    .palette-head input{
+      width:100%; background:transparent; border:none; outline:none;
+      color:var(--text); font-size:1rem;
+    }
+    .palette-list{
+      max-height: 55vh; overflow:auto; padding:8px;
+    }
+    .palette-item{
+      display:block;
+      padding:12px 14px;
+      border-radius:12px;
+      color:var(--text);
+      cursor:pointer;
+    }
+    .palette-item:hover, .palette-item.active{
+      background:var(--panel-2);
+      text-decoration:none;
+    }
+    .palette-item small{
+      display:block; color:var(--muted); margin-top:2px;
+    }
+    mark{
+      background: rgba(139,233,253,.24);
+      color: var(--text);
+      border-radius: 4px;
+      padding: 0 .12em;
+    }
+
+  
+    .toc-group{
+      margin-top: 12px;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      overflow:hidden;
+      background:#101733;
+    }
+    .toc-group summary{
+      list-style:none;
+      cursor:pointer;
+      padding:10px 12px;
+      font-weight:700;
+      color:var(--text);
+      background:#121a38;
+      border-bottom:1px solid transparent;
+    }
+    .toc-group[open] summary{
+      border-bottom-color: var(--border);
+    }
+    .toc-group summary::-webkit-details-marker{ display:none; }
+    .toc-group .toc-sub{
+      padding:8px;
+    }
+    .toc-group .toc-sub a{
+      margin-bottom:2px;
+      font-size:.93rem;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>Integrated Systems Learning Plan</h1>
+        <p>Execution version for building systems intuition through services, observability, and failure testing.</p>
+      </div>
+
+      <div class="tools">
+        <h2>Quick Actions</h2>
+        <button class="btn secondary" id="expandAll" type="button">Expand all</button>
+        <button class="btn secondary" id="collapseAll" type="button" style="margin-top:8px;">Collapse all</button>
+      </div>
+
+      
+      <nav class="toc">
+        <h2>Sections</h2>
+
+        <details class="toc-group" open>
+          <summary>Overview</summary>
+          <div class="toc-sub">
+            <a href="#overview">Overview</a>
+            <a href="#requirements">Requirements</a>
+            <a href="#roadmap">Roadmap</a>
+            <a href="#philosophy">Core Philosophy</a>
+            <a href="#loop">Main Learning Loop</a>
+          </div>
+        </details>
+
+        <details class="toc-group" open>
+          <summary>Execution & Tooling</summary>
+          <div class="toc-sub">
+            <a href="#sources">Sources</a>
+            <a href="#tooling">Rust Tooling</a>
+            <a href="#debugging">Performance Debugging</a>
+            <a href="#observability">Observability Layer</a>
+            <a href="#services">Service Runtime + Long-Running Tests</a>
+            <a href="#architecture">System Architecture Pattern</a>
+          </div>
+        </details>
+
+        <details class="toc-group" open>
+          <summary>Systems Build Path</summary>
+          <div class="toc-sub">
+            <a href="#distributed">Distributed Rust Programming</a>
+            <a href="#target-system">Target System</a>
+            <a href="#networking">Networking Reinforcement</a>
+            <a href="#failure-lab">Failure Laboratory</a>
+            <a href="#data-structures">Systems Data Structures</a>
+            <a href="#cloud">Cloud Architecture</a>
+            <a href="#os">Operating System Intuition</a>
+          </div>
+        </details>
+
+        <details class="toc-group" open>
+          <summary>Reference</summary>
+          <div class="toc-sub">
+            <a href="#stack">Knowledge Stack</a>
+            <a href="#future">Future Ideas</a>
+            <a href="#final-rule">Final Rule</a>
+          </div>
+        </details>
+      </nav>
+
+    </aside>
+
+    <main class="content">
+      <section class="hero" id="overview" data-tags="observability storage networking os distributed">
+        <span class="eyebrow">Execution Version</span>
+        <h2>Integrated Systems Learning Plan</h2>
+        <p>This website turns your plan into a cleaner, easier-to-scan format. It emphasizes action, progress, and the system-building loop you care about most: run services, observe behavior, break things, and repair invariants.</p>
+        <div class="hero-actions">
+          <a class="btn" href="#roadmap">Jump to roadmap</a>
+          <a class="btn secondary" href="#loop">See the learning loop</a>
+        </div>
+      </section>
+
+      
+      <div class="topbar">
+        <div class="searchbar">
+          <span style="color:var(--muted)">🔎</span>
+          <input id="quickSearch" type="text" placeholder="Search sections, terms, tools…" />
+          <span class="kbd">Ctrl/⌘ K</span>
+        </div>
+        <div class="toolbar">
+          <button class="btn secondary small" id="toggleFocus" type="button">Focus mode</button>
+          <button class="btn secondary small" id="clearFilters" type="button">Clear filters</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <section class="card span-7">
+          <h3>Progress Tracker</h3>
+          <p class="muted small">Check things off as you move through the plan.</p>
+          <div class="checklist" id="checklist">
+            <label class="check"><input type="checkbox"> <span>Environment + Observability</span></label>
+            <label class="check"><input type="checkbox"> <span>Core Systems Data Structures</span></label>
+            <label class="check"><input type="checkbox"> <span>In-Memory KV Store</span></label>
+            <label class="check"><input type="checkbox"> <span>Write-Ahead Log</span></label>
+            <label class="check"><input type="checkbox"> <span>Crash Recovery</span></label>
+            <label class="check"><input type="checkbox"> <span>Networking</span></label>
+            <label class="check"><input type="checkbox"> <span>Concurrency</span></label>
+            <label class="check"><input type="checkbox"> <span>Replication</span></label>
+            <label class="check"><input type="checkbox"> <span>Cloud Architecture</span></label>
+          </div>
+        </section>
+
+        <section class="card span-5" id="requirements" data-tags="observability os distributed">
+          <h3>Project Requirements</h3>
+          <div class="chips" style="margin-bottom:12px;">
+            <span class="chip">Long-lived service</span>
+            <span class="chip">Instrumentation</span>
+            <span class="chip">Linux observability</span>
+            <span class="chip">Long-duration tests</span>
+            <span class="chip">Failure injection</span>
+            <span class="chip">Invariant verification</span>
+          </div>
+          <p class="muted">A component is not complete until its behavior can be observed, measured, and explained.</p>
+          <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+          <div class="progress-meta" id="progressMeta">0% complete</div>
+          <div class="filters" id="filters">
+            <button class="filter-chip" data-filter="observability" type="button">observability</button>
+            <button class="filter-chip" data-filter="storage" type="button">storage</button>
+            <button class="filter-chip" data-filter="networking" type="button">networking</button>
+            <button class="filter-chip" data-filter="os" type="button">os</button>
+            <button class="filter-chip" data-filter="distributed" type="button">distributed</button>
+          </div>
+
+        </section>
+      </div>
+
+      
+      <section class="section" id="group-overview" data-tags="observability storage networking os distributed">
+        <div class="card">
+          <h2>Main Group: Overview</h2>
+          <p class="muted">High-level direction, project requirements, roadmap, philosophy, and the core learning loop.</p>
+        </div>
+      </section>
+
+      <section class="section" id="roadmap" data-tags="observability storage networking os distributed">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="roadmap" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="roadmap" data-title="Suggested Learning Order" type="button">Notes</button>
+          </div>
+          <h2>Suggested Learning Order</h2>
+          <div class="roadmap">
+            <div class="step">
+          <div class="num">1</div>
+          <div><strong>Environment + Observability</strong>
+            <div class="muted small">Linux tools: perf, htop, iostat, vmstat, strace. Rust tooling: tracing, cargo-nextest, criterion, bacon.</div>
+            <div class="step-details">
+              Goal: make sure every project can be run, measured, and debugged from day one.<br>
+              Outputs: working perf setup, tracing logs, benchmark harness, checklist of core Linux tools.
+            </div>
+          </div>
+        </div>
+            <div class="step">
+          <div class="num">2</div>
+          <div><strong>Core Systems Data Structures</strong>
+            <div class="muted small">Ring Buffer, Bitmap Allocator, Hash Table, Priority Queue, B-Tree.</div>
+            <div class="step-details">
+              Goal: learn memory layout, cache behavior, and throughput tradeoffs.<br>
+              Outputs: minimal implementations, service wrappers where useful, measurement notes.
+            </div>
+          </div>
+        </div>
+            <div class="step">
+          <div class="num">3</div>
+          <div><strong>First System</strong>
+            <div class="muted small">In-memory KV store with service runtime and observability.</div>
+            <div class="step-details">
+              Goal: combine data structures into a real service.<br>
+              Invariants: reads after writes return latest committed value; requests are measurable.
+            </div>
+          </div>
+        </div>
+            <div class="step">
+          <div class="num">4</div>
+          <div><strong>Durability Layer</strong>
+            <div class="muted small">Write-Ahead Log (WAL).</div>
+            <div class="step-details">
+              Goal: persist mutations before applying them.<br>
+              Invariants: once fsync completes, committed entries are never lost.
+            </div>
+          </div>
+        </div>
+            <div class="step">
+          <div class="num">5</div>
+          <div><strong>Crash Recovery</strong>
+            <div class="muted small">WAL replay and state reconstruction after restart.</div>
+            <div class="step-details">
+              Goal: recover consistent state after failure.<br>
+              Outputs: replay procedure, recovery tests, crash injection notes.
+            </div>
+          </div>
+        </div>
+            <div class="step">
+          <div class="num">6</div>
+          <div><strong>Networking</strong>
+            <div class="muted small">TCP server, request protocol, CS144.</div>
+            <div class="step-details">
+              Goal: move from local service to networked system.<br>
+              Outputs: request protocol, client/server flow, network-level metrics.
+            </div>
+          </div>
+        </div>
+            <div class="step">
+          <div class="num">7</div>
+          <div><strong>Concurrency</strong>
+            <div class="muted small">Multi-threaded or async requests, locking and contention analysis.</div>
+            <div class="step-details">
+              Goal: handle multiple requests safely and efficiently.<br>
+              Focus: contention, queue buildup, tail latency, race conditions.
+            </div>
+          </div>
+        </div>
+            <div class="step">
+          <div class="num">8</div>
+          <div><strong>Replication</strong>
+            <div class="muted small">Multi-node KV store, reinforced by Fly.io Maelstrom.</div>
+            <div class="step-details">
+              Goal: preserve correctness across nodes.<br>
+              Invariants: duplicated or delayed messages do not corrupt state; nodes converge correctly.
+            </div>
+          </div>
+        </div>
+            <div class="step">
+          <div class="num">9</div>
+          <div><strong>Cloud Architecture</strong>
+            <div class="muted small">Optional: LocalStack, S3 snapshots, SQS queues, workers.</div>
+            <div class="step-details">
+              Goal: map system ideas into cloud architecture patterns.<br>
+              Outputs: snapshot pipeline, queue-driven workers, orchestration experiments.
+            </div>
+          </div>
+        </div>
+          </div>
+          <p class="muted" style="margin-top:14px;"><strong>Rule:</strong> Only one milestone active at a time.</p>
+        </div>
+      </section>
+
+      <section class="section" id="philosophy" data-tags="storage distributed os">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="philosophy" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="philosophy" data-title="Core Philosophy" type="button">Notes</button>
+          </div>
+          <h2>Core Philosophy</h2>
+          <p>Focus on <strong>invariants, not features</strong>.</p>
+          <blockquote><strong>What must always remain true?</strong></blockquote>
+          <ul>
+            <li>ordering</li>
+            <li>durability</li>
+            <li>correctness</li>
+            <li>performance</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="loop" data-tags="observability storage networking os distributed">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="loop" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="loop" data-title="Main Learning Loop" type="button">Notes</button>
+          </div>
+          <h2>Main Learning Loop</h2>
+          <pre>run as a service
+↓
+instrument
+↓
+measure
+↓
+run long-duration tests
+↓
+break intentionally
+↓
+repair invariants
+↓
+repeat</pre>
+          <p class="muted">This loop builds real systems intuition.</p>
+        </div>
+      </section>
+
+      
+      <section class="section" id="group-execution" data-tags="observability os networking storage distributed">
+        <div class="card">
+          <h2>Main Group: Execution & Tooling</h2>
+          <p class="muted">Reference material, Rust tooling, performance debugging, observability, service runtime strategy, and architecture pattern.</p>
+        </div>
+      </section>
+
+      <section class="section" id="sources" data-tags="os distributed networking">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="sources" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="sources" data-title="Sources" type="button">Notes</button>
+          </div>
+          <h2>Sources</h2>
+          <h4>Models / References</h4>
+          <ul>
+            <li><a href="https://github.com/Simpson-Systems/sys-userland-kernel-rust/issues/11">OS / Rust models</a></li>
+            <li><a href="https://github.com/Simpson-Systems/sys-userland-kernel-rust/issues/12">Pi reliability experiments</a></li>
+            <li><a href="https://github.com/Simpson-Systems/sys-userland-kernel-rust/issues/36">Notes / ideas</a></li>
+          </ul>
+          <h4>Books</h4>
+          <ul>
+            <li>Designing Data-Intensive Applications (DDIA)</li>
+            <li>Operating Systems: Three Easy Pieces (OSTEP)</li>
+          </ul>
+          <p><strong>Bookshelf:</strong> <a href="https://github.com/Simpson-Systems/sys-userland-kernel-rust/issues/28">GitHub issue link</a></p>
+        </div>
+      </section>
+
+      <section class="section" id="tooling" data-tags="observability networking os distributed storage">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="tooling" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="tooling" data-title="Rust Tooling" type="button">Notes</button>
+          </div>
+          <h2>Rust Tooling</h2>
+          <p class="muted">Goal: tight development feedback loops.</p>
+          <h4>Core libraries</h4>
+          <div class="chips">
+            <span class="chip">serde</span>
+            <span class="chip">clap</span>
+            <span class="chip">tokio</span>
+            <span class="chip">tracing</span>
+            <span class="chip">anyhow</span>
+            <span class="chip">axum</span>
+            <span class="chip">reqwest</span>
+            <span class="chip">bytes</span>
+            <span class="chip">nix</span>
+          </div>
+          <h4>Workflow tools</h4>
+          <div class="chips">
+            <span class="chip">cargo-nextest</span>
+            <span class="chip">just</span>
+            <span class="chip">bacon</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="debugging" data-tags="observability os networking storage distributed">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="debugging" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="debugging" data-title="Performance Debugging Framework" type="button">Notes</button>
+          </div>
+          <h2>Performance Debugging Framework</h2>
+          <details open>
+            <summary>RED (Service Level)</summary>
+            <ul>
+              <li><strong>Rate</strong> → requests/sec</li>
+              <li><strong>Errors</strong> → error rate</li>
+              <li><strong>Duration</strong> → latency (p50 / p95 / p99)</li>
+            </ul>
+            <p class="muted">Ask: Is throughput dropping? Are errors increasing? Is latency rising?</p>
+          </details>
+          <details>
+            <summary>USE (System Level)</summary>
+            <ul>
+              <li><strong>Utilization</strong> → how busy is it?</li>
+              <li><strong>Saturation</strong> → are requests waiting?</li>
+              <li><strong>Errors</strong> → are failures occurring?</li>
+            </ul>
+            <p class="muted">Inspect CPU, Memory, Disk, Network, and Locks / threads.</p>
+          </details>
+          <details>
+            <summary>Profiling (Code Level)</summary>
+            <ul>
+              <li>profile CPU</li>
+              <li>inspect hot paths</li>
+              <li>measure allocations</li>
+            </ul>
+            <p class="muted">Tools: perf, flamegraphs, cargo bench, criterion.</p>
+          </details>
+        </div>
+      </section>
+
+      <section class="section" id="observability" data-tags="observability">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="observability" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="observability" data-title="Observability Layer" type="button">Notes</button>
+          </div>
+          <h2>Observability Layer</h2>
+          <ul>
+            <li>structured logs</li>
+            <li>latency metrics</li>
+            <li>throughput metrics</li>
+            <li>error counters</li>
+            <li>backlog / queue depth metrics</li>
+            <li>traces for multi-step operations</li>
+          </ul>
+          <p>Use both application-level observability and system-level Linux tools.</p>
+          <p class="muted"><strong>Rule:</strong> A component is not complete until you can observe, measure, and explain its behavior under normal load, stress, and failure.</p>
+        </div>
+      </section>
+
+      <section class="section" id="services" data-tags="observability storage networking distributed">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="services" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="services" data-title="Service Runtime + Long-Running Tests" type="button">Notes</button>
+          </div>
+          <h2>Service Runtime + Long-Running Tests</h2>
+          <ul>
+            <li>Expose a service interface when reasonable</li>
+            <li>Run for extended periods</li>
+            <li>Observe memory, CPU, disk, and latency over time</li>
+            <li>Restart it and verify recovery behavior</li>
+            <li>Inject failures while running</li>
+            <li>Confirm invariants still hold after long execution</li>
+          </ul>
+          <h4>Test goals</h4>
+          <ul>
+            <li>detect memory leaks</li>
+            <li>detect queue buildup</li>
+            <li>detect latency drift</li>
+            <li>detect retry storms</li>
+            <li>detect crash recovery issues</li>
+            <li>verify durability under extended runtime</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="architecture" data-tags="storage networking distributed">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="architecture" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="architecture" data-title="System Architecture Pattern" type="button">Notes</button>
+          </div>
+          <h2>System Architecture Pattern</h2>
+          <h4>Core Layer</h4>
+          <ul><li>pure implementation (data structures, algorithms, storage logic)</li></ul>
+          <h4>Service Layer</h4>
+          <ul>
+            <li>long-running runtime</li>
+            <li>instrumentation</li>
+            <li>observability</li>
+            <li>service interface</li>
+          </ul>
+          <pre>core library
+↓
+service wrapper
+↓
+instrumentation
+↓
+long-running runtime</pre>
+        </div>
+      </section>
+
+      
+      <section class="section" id="group-build-path" data-tags="storage networking os distributed">
+        <div class="card">
+          <h2>Main Group: Systems Build Path</h2>
+          <p class="muted">The concrete implementation path from data structures to distributed systems and cloud architecture.</p>
+        </div>
+      </section>
+
+      <section class="section" id="distributed" data-tags="distributed networking storage">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="distributed" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="distributed" data-title="Distributed Rust Programming (Core Track)" type="button">Notes</button>
+          </div>
+          <h2>Distributed Rust Programming (Core Track)</h2>
+          <p>Goal: build a <strong>distributed storage stack in Rust</strong>.</p>
+          <ul>
+            <li><a href="https://github.com/pingcap/talent-plan/blob/master/courses/rust/README.md">Rust Networking</a></li>
+            <li><a href="https://github.com/pingcap/talent-plan/blob/master/courses/dss/README.md">Rust Distributed Systems</a></li>
+            <li><a href="https://youtube.com/playlist?list=PLrw6a1wE39_tb2fErI4-WkMbsvGQk9_UB">Lectures</a></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="target-system" data-tags="storage networking distributed">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="target-system" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="target-system" data-title="Target System" type="button">Notes</button>
+          </div>
+          <h2>Target System</h2>
+          <ol>
+            <li>In-memory KV store</li>
+            <li>Write-ahead log (WAL)</li>
+            <li>Crash recovery</li>
+            <li>Network protocol layer</li>
+            <li>Concurrency control</li>
+            <li>Replication</li>
+            <li>Optional SQL layer</li>
+            <li>Optional object/blob storage</li>
+          </ol>
+          <pre>KV → WAL → Crash Recovery → Protocol → Concurrency → Replication</pre>
+          <p><strong>Distributed systems reinforcement:</strong> <a href="https://fly.io/dist-sys/1/">Fly.io Maelstrom challenges</a></p>
+          <blockquote>If this message arrives twice or late, is my state still correct?</blockquote>
+        </div>
+      </section>
+
+      <section class="section" id="networking" data-tags="networking distributed">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="networking" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="networking" data-title="Networking Reinforcement" type="button">Notes</button>
+          </div>
+          <h2>Networking Reinforcement</h2>
+          <p><a href="https://cs144.github.io/">CS144 Networking Course</a></p>
+          <ul>
+            <li>packet parsing</li>
+            <li>TCP state machines</li>
+            <li>buffering</li>
+            <li>retransmission</li>
+            <li>congestion control</li>
+          </ul>
+          <p class="muted">Goal: understand how reliable networking actually works.</p>
+        </div>
+      </section>
+
+      <section class="section" id="failure-lab" data-tags="observability os storage">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="failure-lab" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="failure-lab" data-title="Failure Laboratory" type="button">Notes</button>
+          </div>
+          <h2>Failure Laboratory</h2>
+          <p>Your Raspberry Pi server is a reliability lab. Install Cockpit on both servers.</p>
+          <ul>
+            <li>kill process during writes</li>
+            <li>crash during job execution</li>
+            <li>restart services mid-operation</li>
+            <li>restore from backups</li>
+          </ul>
+          <p class="muted">Goal: develop intuition for real durability guarantees.</p>
+        </div>
+      </section>
+
+      <section class="section" id="data-structures" data-tags="storage os">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="data-structures" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="data-structures" data-title="Systems Data Structures" type="button">Notes</button>
+          </div>
+          <h2>Systems Data Structures</h2>
+          <ol>
+            <li>bitmap allocator</li>
+            <li>ring buffer</li>
+            <li>hash table</li>
+            <li>B-tree</li>
+            <li>priority queue</li>
+            <li>write-ahead log</li>
+            <li>file compressor</li>
+          </ol>
+          <p><strong>Measure using:</strong></p>
+          <pre>perf stat ./program</pre>
+          <p><strong>Focus on:</strong></p>
+          <ul>
+            <li>cache behavior</li>
+            <li>branch prediction</li>
+            <li>memory layout</li>
+            <li>throughput</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="cloud" data-tags="distributed storage">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="cloud" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="cloud" data-title="Cloud Architecture Layer" type="button">Notes</button>
+          </div>
+          <h2>Cloud Architecture Layer</h2>
+          <p>Use <a href="https://github.com/localstack/localstack">LocalStack</a> to simulate cloud systems.</p>
+          <div class="chips">
+            <span class="chip">S3</span>
+            <span class="chip">SQS</span>
+            <span class="chip">Lambda</span>
+            <span class="chip">Step Functions</span>
+          </div>
+          <h4>Example pipeline</h4>
+          <pre>KV snapshot → S3 upload → queue event → worker processes job</pre>
+          <h4>Concept mapping</h4>
+          <ul>
+            <li>storage durability → S3</li>
+            <li>job queues → SQS</li>
+            <li>workflow orchestration → Step Functions</li>
+            <li>workers → Lambda</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="os" data-tags="os storage">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="os" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="os" data-title="Operating System Intuition" type="button">Notes</button>
+          </div>
+          <h2>Operating System Intuition</h2>
+          <ul>
+            <li>read OSTEP regularly</li>
+            <li>read DDIA</li>
+            <li>build systems data structures</li>
+            <li>measure behavior with perf</li>
+            <li>do MIT xv6 / operating systems labs</li>
+            <li>learn how xv6 works</li>
+          </ul>
+          <h4>Key concepts</h4>
+          <ul>
+            <li>virtual memory</li>
+            <li>context switching</li>
+            <li>system calls</li>
+            <li>filesystem durability</li>
+            <li>scheduling tradeoffs</li>
+          </ul>
+        </div>
+      </section>
+
+      
+      <section class="section" id="group-reference" data-tags="storage networking os distributed">
+        <div class="card">
+          <h2>Main Group: Reference</h2>
+          <p class="muted">Concept map, future ideas, and the final rule that anchors the whole plan.</p>
+        </div>
+      </section>
+
+      <section class="section" id="stack" data-tags="os networking storage distributed">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="stack" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="stack" data-title="Knowledge Stack" type="button">Notes</button>
+          </div>
+          <h2>Knowledge Stack</h2>
+          <div class="stack">
+            <div class="layer">Applications / Cloud Architecture</div>
+            <div class="arrow">↑</div>
+            <div class="layer">Distributed Systems</div>
+            <div class="arrow">↑</div>
+            <div class="layer">Storage Engines</div>
+            <div class="arrow">↑</div>
+            <div class="layer">Networking</div>
+            <div class="arrow">↑</div>
+            <div class="layer">Operating Systems</div>
+            <div class="arrow">↑</div>
+            <div class="layer">Data Structures</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="future" data-tags="distributed storage">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="future" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="future" data-title="Future Ideas" type="button">Notes</button>
+          </div>
+          <h2>Future Ideas</h2>
+          <ul>
+            <li>Durable object store</li>
+            <li>Durable job queue</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="final-rule" data-tags="observability storage distributed os networking">
+        <div class="card">
+          <div class="section-tools">
+            <button class="mini focus-btn" data-target="final-rule" type="button">Focus</button>
+            <button class="mini notes-btn" data-target="final-rule" data-title="Final Rule" type="button">Notes</button>
+          </div>
+          <h2>Final Rule</h2>
+          <blockquote>
+            Build systems.<br>
+            Observe behavior.<br>
+            Break them.<br>
+            Repair invariants.<br>
+            Repeat.
+          </blockquote>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer" id="notesDrawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <div class="muted small">Section Notes</div>
+      <strong id="drawerTitle">Notes</strong>
+    </div>
+    <button class="btn secondary small" id="closeDrawer" type="button">Close</button>
+  </div>
+  <div class="drawer-body">
+    <p class="muted small">Saved locally in your browser for this page.</p>
+    <textarea id="notesArea" placeholder="Write notes, experiments, perf findings, TODOs…"></textarea>
+  </div>
+</aside>
+
+<div class="palette-backdrop" id="paletteBackdrop"></div>
+<div class="palette" id="palette" aria-hidden="true">
+  <div class="palette-head">
+    <input id="paletteInput" type="text" placeholder="Jump to section, tool, topic…" />
+  </div>
+  <div class="palette-list" id="paletteList"></div>
+</div>
+
+<script>
+  // Persist checklist
+  const checks = [...document.querySelectorAll('#checklist input')];
+  const key = 'systems-plan-checklist-v1';
+  const saved = JSON.parse(localStorage.getItem(key) || '[]');
+  checks.forEach((input, idx) => {
+    input.checked = !!saved[idx];
+    if (input.checked) input.closest('.check').classList.add('done');
+    input.addEventListener('change', () => {
+      const state = checks.map(c => c.checked);
+      localStorage.setItem(key, JSON.stringify(state));
+      input.closest('.check').classList.toggle('done', input.checked);
+    });
+  });
+
+  // Expand/collapse
+  document.getElementById('expandAll').onclick = () =>
+    document.querySelectorAll('details').forEach(d => d.open = true);
+  document.getElementById('collapseAll').onclick = () =>
+    document.querySelectorAll('details').forEach(d => d.open = false);
+
+  // Active TOC section
+  const links = [...document.querySelectorAll('.toc a')];
+  const sections = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const id = '#' + entry.target.id;
+      const link = links.find(l => l.getAttribute('href') === id);
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-35% 0px -55% 0px', threshold: 0 });
+  sections.forEach(s => observer.observe(s));
+
+  // Progress bar
+  function updateProgress() {
+    const total = checks.length;
+    const done = checks.filter(c => c.checked).length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressMeta').textContent = `${pct}% complete · ${done}/${total} milestones checked`;
+  }
+  updateProgress();
+  checks.forEach(input => input.addEventListener('change', updateProgress));
+
+  // Roadmap step expand/collapse
+  document.querySelectorAll('.step').forEach(step => {
+    step.addEventListener('click', (e) => {
+      if (e.target.closest('a, button')) return;
+      step.classList.toggle('open');
+    });
+  });
+
+  // Focus mode and per-section focus
+  const body = document.body;
+  const allFocusables = [...document.querySelectorAll('.hero, .grid, .section')];
+  function clearSectionFocus() {
+    document.querySelectorAll('.is-focus, .focused-card').forEach(el => {
+      el.classList.remove('is-focus', 'focused-card');
+    });
+    document.querySelectorAll('.focus-btn.active').forEach(btn => btn.classList.remove('active'));
+  }
+  function focusSection(id) {
+    body.classList.add('focus-mode');
+    clearSectionFocus();
+    const section = document.getElementById(id);
+    if (section) {
+      section.classList.add('is-focus', 'focused-card');
+      const btn = document.querySelector(`.focus-btn[data-target="${id}"]`);
+      if (btn) btn.classList.add('active');
+      section.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  }
+  function disableFocusMode() {
+    body.classList.remove('focus-mode');
+    clearSectionFocus();
+  }
+  document.getElementById('toggleFocus').addEventListener('click', () => {
+    if (body.classList.contains('focus-mode')) disableFocusMode();
+    else focusSection('roadmap');
+  });
+  document.querySelectorAll('.focus-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.target;
+      if (body.classList.contains('focus-mode') && btn.classList.contains('active')) {
+        disableFocusMode();
+      } else {
+        focusSection(id);
+      }
+    });
+  });
+
+  // Notes drawer
+  const drawer = document.getElementById('notesDrawer');
+  const drawerBackdrop = document.getElementById('drawerBackdrop');
+  const notesArea = document.getElementById('notesArea');
+  const drawerTitle = document.getElementById('drawerTitle');
+  let activeNotesKey = null;
+
+  function openDrawer(id, title) {
+    activeNotesKey = 'notes:' + id;
+    drawerTitle.textContent = title;
+    notesArea.value = localStorage.getItem(activeNotesKey) || '';
+    drawer.classList.add('open');
+    drawerBackdrop.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    setTimeout(() => notesArea.focus(), 30);
+  }
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    drawerBackdrop.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+  }
+  document.querySelectorAll('.notes-btn').forEach(btn => {
+    btn.addEventListener('click', () => openDrawer(btn.dataset.target, btn.dataset.title));
+  });
+  notesArea.addEventListener('input', () => {
+    if (activeNotesKey) localStorage.setItem(activeNotesKey, notesArea.value);
+  });
+  document.getElementById('closeDrawer').addEventListener('click', closeDrawer);
+  drawerBackdrop.addEventListener('click', closeDrawer);
+
+  // Filters
+  const filterButtons = [...document.querySelectorAll('.filter-chip')];
+  const filterable = [...document.querySelectorAll('.section[data-tags], .hero[data-tags], .grid [data-tags], .grid .card')];
+  // ensure cards inherit parent section tags when needed
+  const sectionsWithTags = [...document.querySelectorAll('.section[data-tags], .hero[data-tags], .grid section[data-tags], .grid [id][data-tags]')];
+  let activeFilter = null;
+
+  function applyFilter(tag) {
+    activeFilter = tag;
+    filterButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.filter === tag));
+    document.querySelectorAll('.section, .hero, .grid .card, .grid section').forEach(el => {
+      const tags = (el.getAttribute('data-tags') || '').split(/\s+/).filter(Boolean);
+      if (!tag || tags.includes(tag)) el.classList.remove('is-hidden-by-filter');
+      else if (el.classList.contains('card') && !el.closest('[data-tags]')) {
+        // leave generic cards alone
+      } else el.classList.add('is-hidden-by-filter');
+    });
+  }
+  filterButtons.forEach(btn => btn.addEventListener('click', () => {
+    applyFilter(activeFilter === btn.dataset.filter ? null : btn.dataset.filter);
+  }));
+  document.getElementById('clearFilters').addEventListener('click', () => applyFilter(null));
+
+  // Quick search highlights + jump
+  const searchInput = document.getElementById('quickSearch');
+  function clearMarks() {
+    document.querySelectorAll('mark.search-mark').forEach(m => {
+      const parent = m.parentNode;
+      parent.replaceChild(document.createTextNode(m.textContent), m);
+      parent.normalize();
+    });
+  }
+  function simpleHighlight(term) {
+    clearMarks();
+    if (!term.trim()) return;
+    const lower = term.toLowerCase();
+    const candidates = document.querySelectorAll('.card p, .card li, .card h2, .card h3, .card h4, .card blockquote, .step-details, .muted.small');
+    for (const el of candidates) {
+      if (el.children.length) continue;
+      const text = el.textContent;
+      const idx = text.toLowerCase().indexOf(lower);
+      if (idx >= 0) {
+        const before = text.slice(0, idx);
+        const match = text.slice(idx, idx + term.length);
+        const after = text.slice(idx + term.length);
+        el.innerHTML = `${before}<mark class="search-mark">${match}</mark>${after}`;
+      }
+    }
+  }
+  searchInput.addEventListener('input', () => simpleHighlight(searchInput.value));
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const term = searchInput.value.trim().toLowerCase();
+      if (!term) return;
+      const target = [...document.querySelectorAll('.section, .hero')].find(el => el.textContent.toLowerCase().includes(term));
+      if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  });
+
+  // Command palette
+  const palette = document.getElementById('palette');
+  const paletteBackdrop = document.getElementById('paletteBackdrop');
+  const paletteInput = document.getElementById('paletteInput');
+  const paletteList = document.getElementById('paletteList');
+
+  const paletteItems = [
+    {title:'Main Group: Overview', subtitle:'High-level direction and learning loop', href:'#group-overview'},
+    {title:'Suggested Learning Order', subtitle:'Roadmap and execution order', href:'#roadmap'},
+    {title:'Core Philosophy', subtitle:'Invariants over features', href:'#philosophy'},
+    {title:'Main Learning Loop', subtitle:'Run, measure, break, repair', href:'#loop'},
+
+    {title:'Main Group: Execution & Tooling', subtitle:'Tooling, debugging, observability, runtime strategy', href:'#group-execution'},
+    {title:'Sources', subtitle:'References and books', href:'#sources'},
+    {title:'Rust Tooling', subtitle:'Core crates and workflow tools', href:'#tooling'},
+    {title:'Performance Debugging', subtitle:'RED, USE, profiling', href:'#debugging'},
+    {title:'Observability Layer', subtitle:'Logs, metrics, traces', href:'#observability'},
+    {title:'Service Runtime', subtitle:'Long-running tests and recovery', href:'#services'},
+    {title:'System Architecture Pattern', subtitle:'Core library + service wrapper', href:'#architecture'},
+
+    {title:'Main Group: Systems Build Path', subtitle:'The implementation path through systems topics', href:'#group-build-path'},
+    {title:'Distributed Rust Programming', subtitle:'Storage stack in Rust', href:'#distributed'},
+    {title:'Target System', subtitle:'KV → WAL → Replication', href:'#target-system'},
+    {title:'Networking Reinforcement', subtitle:'CS144 and network fundamentals', href:'#networking'},
+    {title:'Failure Laboratory', subtitle:'Raspberry Pi reliability lab', href:'#failure-lab'},
+    {title:'Systems Data Structures', subtitle:'Core practice structures', href:'#data-structures'},
+    {title:'Cloud Architecture', subtitle:'LocalStack pipelines', href:'#cloud'},
+    {title:'Operating System Intuition', subtitle:'OSTEP, xv6, perf', href:'#os'},
+
+    {title:'Main Group: Reference', subtitle:'Knowledge map and future direction', href:'#group-reference'},
+    {title:'Knowledge Stack', subtitle:'Layered systems model', href:'#stack'},
+    {title:'Future Ideas', subtitle:'Object store and job queue', href:'#future'},
+    {title:'Final Rule', subtitle:'The systems mantra', href:'#final-rule'},
+  ];
+  function renderPalette(filter='') {
+    const q = filter.trim().toLowerCase();
+    const items = paletteItems.filter(item =>
+      !q || item.title.toLowerCase().includes(q) || item.subtitle.toLowerCase().includes(q)
+    );
+    paletteList.innerHTML = items.map((item, idx) => `
+      <a class="palette-item ${idx===0?'active':''}" href="${item.href}" data-href="${item.href}">
+        ${item.title}
+        <small>${item.subtitle}</small>
+      </a>
+    `).join('');
+    paletteList.querySelectorAll('.palette-item').forEach(a => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        closePalette();
+        const target = document.querySelector(a.dataset.href);
+        if (target) target.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+  }
+  function openPalette() {
+    palette.classList.add('open');
+    paletteBackdrop.classList.add('open');
+    palette.setAttribute('aria-hidden', 'false');
+    paletteInput.value = '';
+    renderPalette();
+    setTimeout(() => paletteInput.focus(), 20);
+  }
+  function closePalette() {
+    palette.classList.remove('open');
+    paletteBackdrop.classList.remove('open');
+    palette.setAttribute('aria-hidden', 'true');
+  }
+  paletteInput.addEventListener('input', () => renderPalette(paletteInput.value));
+  paletteBackdrop.addEventListener('click', closePalette);
+  document.addEventListener('keydown', (e) => {
+    const meta = e.metaKey || e.ctrlKey;
+    if (meta && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (palette.classList.contains('open')) closePalette();
+      else openPalette();
+    }
+    if (e.key === 'Escape') {
+      closePalette();
+      closeDrawer();
+      clearMarks();
+      searchInput.value = '';
+      disableFocusMode();
+    }
+  });
+
+</script>
+</body>
+</html>
