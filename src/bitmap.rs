@@ -187,6 +187,9 @@ mod bit_tests {
     }
 
     #[test]
+    fn test_bits_not_words_for_init() {}
+
+    #[test]
     fn test_multiple_bits() {
         init_tracing();
         let mut bitset = BitSet::with_capacity(128);
